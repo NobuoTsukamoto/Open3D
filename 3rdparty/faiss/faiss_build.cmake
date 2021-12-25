@@ -12,6 +12,9 @@ ExternalProject_Add(
     URL_HASH SHA256=6550aa32ea28484ec774228b5cc7555c58304dd971bb5e5601999c351f20b9bd
     DOWNLOAD_DIR "${OPEN3D_THIRD_PARTY_DOWNLOAD_DIR}/faiss"
     UPDATE_COMMAND ""
+    PATCH_COMMAND COMMAND ${GIT_EXECUTABLE} init
+    COMMAND ${GIT_EXECUTABLE} apply --ignore-space-change --ignore-whitespace
+        ${CMAKE_CURRENT_LIST_DIR}/faiss_cuda_host_compiler.patch
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${MKL_INSTALL_PREFIX}
         -DCMAKE_CUDA_FLAGS=${CUDA_GENCODES}

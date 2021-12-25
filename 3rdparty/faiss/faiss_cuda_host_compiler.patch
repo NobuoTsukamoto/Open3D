@@ -1,0 +1,22 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 81524b9..05a7dc8 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -13,7 +13,7 @@ project(faiss
+   LANGUAGES CXX)
+ include(GNUInstallDirs)
+ 
+-set(CMAKE_CXX_STANDARD 11)
++set(CMAKE_CXX_STANDARD 14)
+ 
+ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+ 
+@@ -24,7 +24,7 @@ option(FAISS_ENABLE_PYTHON "Build Python extension." ON)
+ option(FAISS_USE_SYSTEM_BLAS "Build system pre-installed BLAS." OFF)
+ 
+ if(FAISS_ENABLE_GPU)
+-  set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
++  set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CUDA_HOST_COMPILER})
+   enable_language(CUDA)
+ endif()
+ 
