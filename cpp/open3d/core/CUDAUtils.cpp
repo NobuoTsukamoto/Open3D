@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -106,6 +106,27 @@ void AssertCUDADeviceAvailable(const Device& device) {
                 "Expected device-type to be CUDA, but got device '{}'",
                 device.ToString());
     }
+}
+
+bool SupportsMemoryPools(const Device& device) {
+#if defined(BUILD_CUDA_MODULE) && (CUDART_VERSION >= 11020)
+    if (device.IsCUDA()) {
+        int driverVersion = 0;
+        int deviceSupportsMemoryPools = 0;
+        OPEN3D_CUDA_CHECK(cudaDriverGetVersion(&driverVersion));
+        if (driverVersion >=
+            11020) {  // avoid invalid value error in cudaDeviceGetAttribute
+            OPEN3D_CUDA_CHECK(cudaDeviceGetAttribute(
+                    &deviceSupportsMemoryPools, cudaDevAttrMemoryPoolsSupported,
+                    device.GetID()));
+        }
+        return !!deviceSupportsMemoryPools;
+    } else {
+        return false;
+    }
+#else
+    return false;
+#endif
 }
 
 #ifdef BUILD_CUDA_MODULE

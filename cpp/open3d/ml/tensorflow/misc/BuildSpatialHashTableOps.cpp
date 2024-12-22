@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -78,7 +78,7 @@ The following example shows how **build_spatial_hash_table** and
 
   radius = 1.0
 
-  # build the spatial hash table for fixex_radius_search
+  # build the spatial hash table for fixed_radius_search
   table = ml3d.ops.build_spatial_hash_table(points,
                                             radius,
                                             points_row_splits=torch.LongTensor([0,5]),

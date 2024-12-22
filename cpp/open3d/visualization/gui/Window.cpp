@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -707,7 +707,7 @@ Widget::DrawResult DrawChild(DrawContext& dc,
                              const char* name,
                              std::shared_ptr<Widget> child,
                              Mode mode) {
-    // Note: ImGUI's concept of a "window" is really a moveable child of the
+    // Note: ImGUI's concept of a "window" is really a movable child of the
     //       OS window. We want a child to act like a child of the OS window,
     //       like native UI toolkits, Qt, etc. So the top-level widgets of
     //       a window are drawn using ImGui windows whose frame is specified

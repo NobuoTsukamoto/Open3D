@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 #pragma once
@@ -118,13 +118,6 @@ void _KnnSearchCPU(NanoFlannIndexHolderBase *holder,
         return;
     }
 
-    auto points_equal = [](const T *const p1, const T *const p2,
-                           size_t dimension) {
-        std::vector<T> p1_vec(p1, p1 + dimension);
-        std::vector<T> p2_vec(p2, p2 + dimension);
-        return p1_vec == p2_vec;
-    };
-
     std::vector<std::vector<TIndex>> neighbors_indices(num_queries);
     std::vector<std::vector<T>> neighbors_distances(num_queries);
     std::vector<uint32_t> neighbors_count(num_queries, 0);
@@ -147,8 +140,9 @@ void _KnnSearchCPU(NanoFlannIndexHolderBase *holder,
                     for (size_t valid_i = 0; valid_i < num_valid; ++valid_i) {
                         TIndex idx = result_indices[valid_i];
                         if (ignore_query_point &&
-                            points_equal(&queries[i * dimension],
-                                         &points[idx * dimension], dimension)) {
+                            std::equal(&queries[i * dimension],
+                                       &queries[i * dimension] + dimension,
+                                       &points[idx * dimension])) {
                             continue;
                         }
                         neighbors_indices[i].push_back(idx);
@@ -222,18 +216,11 @@ void _RadiusSearchCPU(NanoFlannIndexHolderBase *holder,
         return;
     }
 
-    auto points_equal = [](const T *const p1, const T *const p2,
-                           size_t dimension) {
-        std::vector<T> p1_vec(p1, p1 + dimension);
-        std::vector<T> p2_vec(p2, p2 + dimension);
-        return p1_vec == p2_vec;
-    };
-
     std::vector<std::vector<TIndex>> neighbors_indices(num_queries);
     std::vector<std::vector<T>> neighbors_distances(num_queries);
     std::vector<uint32_t> neighbors_count(num_queries, 0);
 
-    nanoflann::SearchParams params;
+    nanoflann::SearchParameters params;
     params.sorted = sort;
 
     auto holder_ =
@@ -241,7 +228,7 @@ void _RadiusSearchCPU(NanoFlannIndexHolderBase *holder,
     tbb::parallel_for(
             tbb::blocked_range<size_t>(0, num_queries),
             [&](const tbb::blocked_range<size_t> &r) {
-                std::vector<std::pair<TIndex, T>> search_result;
+                std::vector<nanoflann::ResultItem<TIndex, T>> search_result;
                 for (size_t i = r.begin(); i != r.end(); ++i) {
                     T radius = radii[i];
                     if (METRIC == L2) {
@@ -255,9 +242,9 @@ void _RadiusSearchCPU(NanoFlannIndexHolderBase *holder,
                     int num_neighbors = 0;
                     for (const auto &idx_dist : search_result) {
                         if (ignore_query_point &&
-                            points_equal(&queries[i * dimension],
-                                         &points[idx_dist.first * dimension],
-                                         dimension)) {
+                            std::equal(&queries[i * dimension],
+                                       &queries[i * dimension] + dimension,
+                                       &points[idx_dist.first * dimension])) {
                             continue;
                         }
                         neighbors_indices[i].push_back(idx_dist.first);
@@ -346,7 +333,7 @@ void _HybridSearchCPU(NanoFlannIndexHolderBase *holder,
     output_allocator.AllocDistances(&distances_ptr, num_indices);
     output_allocator.AllocCounts(&counts_ptr, num_queries);
 
-    nanoflann::SearchParams params;
+    nanoflann::SearchParameters params;
     params.sorted = true;
 
     auto holder_ =
@@ -354,7 +341,7 @@ void _HybridSearchCPU(NanoFlannIndexHolderBase *holder,
     tbb::parallel_for(
             tbb::blocked_range<size_t>(0, num_queries),
             [&](const tbb::blocked_range<size_t> &r) {
-                std::vector<std::pair<TIndex, T>> ret_matches;
+                std::vector<nanoflann::ResultItem<TIndex, T>> ret_matches;
                 for (size_t i = r.begin(); i != r.end(); ++i) {
                     size_t num_results = holder_->index_->radiusSearch(
                             &queries[i * dimension], radius_squared,

@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -196,6 +196,8 @@ std::vector<Eigen::Vector3d> VoxelGrid::GetVoxelBoundingPoints(
 void VoxelGrid::AddVoxel(const Voxel &voxel) {
     voxels_[voxel.grid_index_] = voxel;
 }
+
+void VoxelGrid::RemoveVoxel(const Eigen::Vector3i &idx) { voxels_.erase(idx); }
 
 std::vector<bool> VoxelGrid::CheckIfIncluded(
         const std::vector<Eigen::Vector3d> &queries) {

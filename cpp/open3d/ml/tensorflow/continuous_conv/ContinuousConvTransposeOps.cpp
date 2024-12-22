@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -145,8 +145,8 @@ REGISTER_OP("Open3DContinuousConvTranspose")
                 if (c->ValueKnown(c->Dim(filters_shape, i))) {
                     int64_t n = c->Value(c->Dim(filters_shape, i));
                     if (n < 1)
-                        return Status(error::INVALID_ARGUMENT,
-                                      "Each filter dimension must be >= 1");
+                        return absl::InvalidArgumentError(
+                                "Each filter dimension must be >= 1");
                 }
             }
 

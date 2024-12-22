@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -108,6 +108,37 @@
                    IDTYPE == open3d::core::Int64) {               \
             using scalar_t = double;                              \
             using int_t = int64_t;                                \
+            return __VA_ARGS__();                                 \
+        } else {                                                  \
+            open3d::utility::LogError("Unsupported data type.");  \
+        }                                                         \
+    }()
+
+#define DISPATCH_INT_DTYPE_PREFIX_TO_TEMPLATE(DTYPE, PREFIX, ...) \
+    [&] {                                                         \
+        if (DTYPE == open3d::core::Int8) {                        \
+            using scalar_##PREFIX##_t = int8_t;                   \
+            return __VA_ARGS__();                                 \
+        } else if (DTYPE == open3d::core::Int16) {                \
+            using scalar_##PREFIX##_t = int16_t;                  \
+            return __VA_ARGS__();                                 \
+        } else if (DTYPE == open3d::core::Int32) {                \
+            using scalar_##PREFIX##_t = int32_t;                  \
+            return __VA_ARGS__();                                 \
+        } else if (DTYPE == open3d::core::Int64) {                \
+            using scalar_##PREFIX##_t = int64_t;                  \
+            return __VA_ARGS__();                                 \
+        } else if (DTYPE == open3d::core::UInt8) {                \
+            using scalar_##PREFIX##_t = uint8_t;                  \
+            return __VA_ARGS__();                                 \
+        } else if (DTYPE == open3d::core::UInt16) {               \
+            using scalar_##PREFIX##_t = uint16_t;                 \
+            return __VA_ARGS__();                                 \
+        } else if (DTYPE == open3d::core::UInt32) {               \
+            using scalar_##PREFIX##_t = uint32_t;                 \
+            return __VA_ARGS__();                                 \
+        } else if (DTYPE == open3d::core::UInt64) {               \
+            using scalar_##PREFIX##_t = uint64_t;                 \
             return __VA_ARGS__();                                 \
         } else {                                                  \
             open3d::utility::LogError("Unsupported data type.");  \

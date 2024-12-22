@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -91,6 +91,10 @@ public:
     /// For ICP: the overlapping area (# of inlier correspondences / # of points
     /// in target). Higher is better.
     double fitness_;
+    /// Specifies whether the algorithm converged or not.
+    bool converged_{false};
+    /// Number of iterations the algorithm took to converge.
+    size_t num_iterations_{0};
 };
 
 /// \brief Function for evaluating registration between point clouds.
@@ -178,7 +182,7 @@ RegistrationResult MultiScaleICP(
                 void(const std::unordered_map<std::string, core::Tensor> &)>
                 &callback_after_iteration = nullptr);
 
-/// \brief Computes `Information Matrix`, from the transformation between source
+/// \brief Computes `Information Matrix`, from the transfromation between source
 /// and target pointcloud. It returns the `Information Matrix` of shape {6, 6},
 /// of dtype `Float64` on device `CPU:0`.
 ///

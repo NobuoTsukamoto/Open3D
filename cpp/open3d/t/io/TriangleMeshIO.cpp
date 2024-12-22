@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -45,6 +45,7 @@ static const std::unordered_map<
                            const bool)>>
         file_extension_to_trianglemesh_write_function{
                 {"npz", WriteTriangleMeshToNPZ},
+                {"glb", WriteTriangleMeshUsingASSIMP},
         };
 
 std::shared_ptr<geometry::TriangleMesh> CreateMeshFromFile(

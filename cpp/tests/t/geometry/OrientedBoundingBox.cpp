@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -226,8 +226,8 @@ TEST_P(OrientedBoundingBoxPermuteDevices, Scale) {
 TEST_P(OrientedBoundingBoxPermuteDevices, GetBoxPoints) {
     core::Device device = GetParam();
 
-    core::Tensor center = core::Tensor::Init<float>({-1, -1, -1}, device);
-    core::Tensor extent = core::Tensor::Init<float>({1.0, 1.0, 1.0}, device);
+    core::Tensor center = core::Tensor::Init<float>({-1., -1., -1.}, device);
+    core::Tensor extent = core::Tensor::Init<float>({0.0, 0.0, 1.0}, device);
     core::Tensor rotation = core::Tensor::Eye(3, core::Float32, device);
 
     t::geometry::OrientedBoundingBox obb(center, rotation, extent);
@@ -235,14 +235,14 @@ TEST_P(OrientedBoundingBoxPermuteDevices, GetBoxPoints) {
     auto box_points = obb.GetBoxPoints();
 
     EXPECT_TRUE(
-            box_points.AllClose(core::Tensor::Init<float>({{-1.5, -1.5, -1.5},
-                                                           {-0.5, -1.5, -1.5},
-                                                           {-1.5, -0.5, -1.5},
-                                                           {-1.5, -1.5, -0.5},
-                                                           {-0.5, -0.5, -0.5},
-                                                           {-1.5, -0.5, -0.5},
-                                                           {-0.5, -1.5, -0.5},
-                                                           {-0.5, -0.5, -1.5}},
+            box_points.AllClose(core::Tensor::Init<float>({{-1.0, -1.0, -1.5},
+                                                           {-1.0, -1.0, -1.5},
+                                                           {-1.0, -1.0, -1.5},
+                                                           {-1.0, -1.0, -0.5},
+                                                           {-1.0, -1.0, -0.5},
+                                                           {-1.0, -1.0, -0.5},
+                                                           {-1.0, -1.0, -0.5},
+                                                           {-1.0, -1.0, -1.5}},
                                                           device)));
 }
 

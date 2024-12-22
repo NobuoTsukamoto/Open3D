@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------------
 # -                        Open3D: www.open3d.org                            -
 # ----------------------------------------------------------------------------
-# Copyright (c) 2018-2023 www.open3d.org
+# Copyright (c) 2018-2024 www.open3d.org
 # SPDX-License-Identifier: MIT
 # ----------------------------------------------------------------------------
 
@@ -104,7 +104,6 @@ if __name__ == '__main__':
                             intrinsic,
                             intrinsic,
                             extrinsics,
-                            integrate_color=True,
                             config=config)
 
             pcd = vbg.extract_point_cloud()

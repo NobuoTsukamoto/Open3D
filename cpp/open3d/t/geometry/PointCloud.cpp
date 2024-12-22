@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -34,6 +34,7 @@
 #include "open3d/t/geometry/TriangleMesh.h"
 #include "open3d/t/geometry/VtkUtils.h"
 #include "open3d/t/geometry/kernel/GeometryMacros.h"
+#include "open3d/t/geometry/kernel/Metrics.h"
 #include "open3d/t/geometry/kernel/PCAPartition.h"
 #include "open3d/t/geometry/kernel/PointCloud.h"
 #include "open3d/t/geometry/kernel/Transform.h"
@@ -275,30 +276,66 @@ PointCloud PointCloud::SelectByIndex(
     return pcd;
 }
 
-PointCloud PointCloud::VoxelDownSample(
-        double voxel_size, const core::HashBackendType &backend) const {
+PointCloud PointCloud::VoxelDownSample(double voxel_size,
+                                       const std::string &reduction) const {
     if (voxel_size <= 0) {
         utility::LogError("voxel_size must be positive.");
     }
-    core::Tensor points_voxeld = GetPointPositions() / voxel_size;
-    core::Tensor points_voxeli = points_voxeld.Floor().To(core::Int64);
+    if (reduction != "mean") {
+        utility::LogError("Reduction can only be 'mean' for VoxelDownSample.");
+    }
 
-    core::HashSet points_voxeli_hashset(points_voxeli.GetLength(), core::Int64,
-                                        {3}, device_, backend);
+    // Discretize voxels.
+    core::Tensor voxeld = GetPointPositions() / voxel_size;
+    core::Tensor voxeli = voxeld.Floor().To(core::Int64);
 
-    core::Tensor buf_indices, masks;
-    points_voxeli_hashset.Insert(points_voxeli, buf_indices, masks);
+    // Map discrete voxels to indices.
+    core::HashSet voxeli_hashset(voxeli.GetLength(), core::Int64, {3}, device_);
 
-    PointCloud pcd_down(GetPointPositions().GetDevice());
+    // Index map: (0, original_points) -> (0, unique_points).
+    core::Tensor index_map_point2voxel, masks;
+    voxeli_hashset.Insert(voxeli, index_map_point2voxel, masks);
+
+    // Insert and find are two different passes.
+    // In the insertion pass, -1/false is returned for already existing
+    // downsampled corresponding points.
+    // In the find pass, actual indices are returned corresponding downsampled
+    // points.
+    voxeli_hashset.Find(voxeli, index_map_point2voxel, masks);
+    index_map_point2voxel = index_map_point2voxel.To(core::Int64);
+
+    int64_t num_points = voxeli.GetLength();
+    int64_t num_voxels = voxeli_hashset.Size();
+
+    // Count the number of points in each voxel.
+    auto voxel_num_points =
+            core::Tensor::Zeros({num_voxels}, core::Float32, device_);
+    voxel_num_points.IndexAdd_(
+            /*dim*/ 0, index_map_point2voxel,
+            core::Tensor::Ones({num_points}, core::Float32, device_));
+
+    // Create a new point cloud.
+    PointCloud pcd_down(device_);
     for (auto &kv : point_attr_) {
-        if (kv.first == "positions") {
-            pcd_down.SetPointAttr(kv.first,
-                                  points_voxeli.IndexGet({masks}).To(
-                                          GetPointPositions().GetDtype()) *
-                                          voxel_size);
+        auto point_attr = kv.second;
+
+        std::string attr_string = kv.first;
+        auto attr_dtype = point_attr.GetDtype();
+
+        // Use float to avoid unsupported tensor types.
+        core::SizeVector attr_shape = point_attr.GetShape();
+        attr_shape[0] = num_voxels;
+        auto voxel_attr =
+                core::Tensor::Zeros(attr_shape, core::Float32, device_);
+        if (reduction == "mean") {
+            voxel_attr.IndexAdd_(0, index_map_point2voxel,
+                                 point_attr.To(core::Float32));
+            voxel_attr /= voxel_num_points.View({-1, 1});
+            voxel_attr = voxel_attr.To(attr_dtype);
         } else {
-            pcd_down.SetPointAttr(kv.first, kv.second.IndexGet({masks}));
+            utility::LogError("Unsupported reduction type {}.", reduction);
         }
+        pcd_down.SetPointAttr(attr_string, voxel_attr);
     }
 
     return pcd_down;
@@ -347,12 +384,42 @@ PointCloud PointCloud::RandomDownSample(double sampling_ratio) const {
             false, false);
 }
 
-PointCloud PointCloud::FarthestPointDownSample(size_t num_samples) const {
-    // We want the sampled points has the attributes of the original point
-    // cloud, so full copy is needed.
-    const open3d::geometry::PointCloud lpcd = ToLegacy();
-    return FromLegacy(*lpcd.FarthestPointDownSample(num_samples),
-                      GetPointPositions().GetDtype(), GetDevice());
+PointCloud PointCloud::FarthestPointDownSample(const size_t num_samples,
+                                               const size_t start_index) const {
+    const core::Dtype dtype = GetPointPositions().GetDtype();
+    const int64_t num_points = GetPointPositions().GetLength();
+    if (num_samples == 0) {
+        return PointCloud(GetDevice());
+    } else if (num_samples == size_t(num_points)) {
+        return Clone();
+    } else if (num_samples > size_t(num_points)) {
+        utility::LogError(
+                "Illegal number of samples: {}, must <= point size: {}",
+                num_samples, num_points);
+    } else if (start_index >= size_t(num_points)) {
+        utility::LogError("Illegal start index: {}, must <= point size: {}",
+                          start_index, num_points);
+    }
+    core::Tensor selection_mask =
+            core::Tensor::Zeros({num_points}, core::Bool, GetDevice());
+    core::Tensor smallest_distances = core::Tensor::Full(
+            {num_points}, std::numeric_limits<double>::infinity(), dtype,
+            GetDevice());
+
+    int64_t farthest_index = static_cast<int64_t>(start_index);
+
+    for (size_t i = 0; i < num_samples; i++) {
+        selection_mask[farthest_index] = true;
+        core::Tensor selected = GetPointPositions()[farthest_index];
+
+        core::Tensor diff = GetPointPositions() - selected;
+        core::Tensor distances_to_selected = (diff * diff).Sum({1});
+        smallest_distances = open3d::core::Minimum(distances_to_selected,
+                                                   smallest_distances);
+
+        farthest_index = smallest_distances.ArgMax({0}).Item<int64_t>();
+    }
+    return SelectByMask(selection_mask);
 }
 
 std::tuple<PointCloud, core::Tensor> PointCloud::RemoveRadiusOutliers(
@@ -695,12 +762,15 @@ void PointCloud::OrientNormalsTowardsCameraLocation(
     }
 }
 
-void PointCloud::OrientNormalsConsistentTangentPlane(size_t k) {
+void PointCloud::OrientNormalsConsistentTangentPlane(
+        size_t k,
+        const double lambda /* = 0.0*/,
+        const double cos_alpha_tol /* = 1.0*/) {
     PointCloud tpcd(GetPointPositions());
     tpcd.SetPointNormals(GetPointNormals());
 
     open3d::geometry::PointCloud lpcd = tpcd.ToLegacy();
-    lpcd.OrientNormalsConsistentTangentPlane(k);
+    lpcd.OrientNormalsConsistentTangentPlane(k, lambda, cos_alpha_tol);
 
     SetPointNormals(core::eigen_converter::EigenVector3dVectorToTensor(
             lpcd.normals_, GetPointPositions().GetDtype(), GetDevice()));
@@ -944,6 +1014,12 @@ geometry::Image PointCloud::ProjectToDepthImage(int width,
                                                 const core::Tensor &extrinsics,
                                                 float depth_scale,
                                                 float depth_max) {
+    if (!HasPointPositions()) {
+        utility::LogWarning(
+                "Called ProjectToDepthImage on a point cloud with no Positions "
+                "attribute. Returning empty image.");
+        return geometry::Image();
+    }
     core::AssertTensorShape(intrinsics, {3, 3});
     core::AssertTensorShape(extrinsics, {4, 4});
 
@@ -962,6 +1038,12 @@ geometry::RGBDImage PointCloud::ProjectToRGBDImage(
         const core::Tensor &extrinsics,
         float depth_scale,
         float depth_max) {
+    if (!HasPointPositions()) {
+        utility::LogWarning(
+                "Called ProjectToRGBDImage on a point cloud with no Positions "
+                "attribute. Returning empty image.");
+        return geometry::RGBDImage();
+    }
     if (!HasPointColors()) {
         utility::LogError(
                 "Unable to project to RGBD without the Color attribute in the "
@@ -1252,6 +1334,39 @@ int PointCloud::PCAPartition(int max_points) {
             kernel::pcapartition::PCAPartition(GetPointPositions(), max_points);
     SetPointAttr("partition_ids", partition_ids.To(GetDevice()));
     return num_partitions;
+}
+
+core::Tensor PointCloud::ComputeMetrics(const PointCloud &pcd2,
+                                        std::vector<Metric> metrics,
+                                        MetricParameters params) const {
+    if (IsEmpty() || pcd2.IsEmpty()) {
+        utility::LogError("One or both input point clouds are empty!");
+    }
+    if (!IsCPU() || !pcd2.IsCPU()) {
+        utility::LogWarning(
+                "ComputeDistance is implemented only on CPU. Computing on "
+                "CPU.");
+    }
+    core::Tensor points1 = GetPointPositions().To(core::Device("CPU:0")),
+                 points2 = pcd2.GetPointPositions().To(core::Device("CPU:0"));
+    [[maybe_unused]] core::Tensor indices12, indices21;
+    core::Tensor sqr_distance12, sqr_distance21;
+
+    core::nns::NearestNeighborSearch tree1(points1);
+    core::nns::NearestNeighborSearch tree2(points2);
+
+    if (!tree2.KnnIndex()) {
+        utility::LogError("[ComputeDistance] Building KNN-Index failed!");
+    }
+    if (!tree1.KnnIndex()) {
+        utility::LogError("[ComputeDistance] Building KNN-Index failed!");
+    }
+
+    std::tie(indices12, sqr_distance12) = tree2.KnnSearch(points1, 1);
+    std::tie(indices21, sqr_distance21) = tree1.KnnSearch(points2, 1);
+
+    return ComputeMetricsCommon(sqr_distance12.Sqrt_(), sqr_distance21.Sqrt_(),
+                                metrics, params);
 }
 
 }  // namespace geometry

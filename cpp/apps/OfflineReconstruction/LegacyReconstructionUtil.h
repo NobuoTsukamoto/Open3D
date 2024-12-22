@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -1025,7 +1025,7 @@ private:
         Eigen::Matrix6d info;
         const size_t num_scale = voxel_size.size();
         for (size_t i = 0; i < num_scale; i++) {
-            const double max_dis = config_["voxel_szie"].asDouble() * 1.4;
+            const double max_dis = config_["voxel_size"].asDouble() * 1.4;
             const auto src_down = src.VoxelDownSample(voxel_size[i]);
             const auto dst_down = dst.VoxelDownSample(voxel_size[i]);
             const pipelines::registration::ICPConvergenceCriteria criteria(

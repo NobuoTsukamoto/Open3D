@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------------
 # -                        Open3D: www.open3d.org                            -
 # ----------------------------------------------------------------------------
-# Copyright (c) 2018-2023 www.open3d.org
+# Copyright (c) 2018-2024 www.open3d.org
 # SPDX-License-Identifier: MIT
 # ----------------------------------------------------------------------------
 """Tests the reference python implementation of the continuous conv"""
@@ -28,8 +28,8 @@ pytestmark = mltest.default_marks
 def test_compare_to_conv3d(dtype, filter_size, out_channels, in_channels,
                            with_inp_importance, with_normalization):
     """Compares to the 3D convolution in tensorflow"""
-    import tensorflow as tf
-    import open3d.ml.tf as ml3d
+    tf = pytest.importorskip('tensorflow')
+    ml3d = pytest.importorskip('open3d.ml.tf')
     np.random.seed(0)
 
     conv_attrs = {
@@ -123,8 +123,8 @@ def test_cconv_gradient(filter_size, out_channels, in_channels,
                         with_inp_importance, with_neighbors_importance,
                         with_individual_extent, with_normalization,
                         align_corners, coordinate_mapping, interpolation):
-    import tensorflow as tf
-    import open3d.ml.tf as ml3d
+    tf = pytest.importorskip('tensorflow')
+    ml3d = pytest.importorskip('open3d.ml.tf')
     dtype = np.float64
     np.random.seed(0)
 

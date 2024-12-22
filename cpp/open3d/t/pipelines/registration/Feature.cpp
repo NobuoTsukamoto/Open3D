@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -102,6 +102,7 @@ core::Tensor CorrespondencesFromFeatures(const core::Tensor &source_features,
 
     const int kMaxThreads = utility::EstimateMaxThreads();
     const int kOuterThreads = std::min(kMaxThreads, num_searches);
+    (void)kOuterThreads;  // Avoids compiler warning if OpenMP is disabled
 
     // corres[0]: corres_ij, corres[1]: corres_ji
 #pragma omp parallel for num_threads(kOuterThreads)

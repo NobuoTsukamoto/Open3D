@@ -1,11 +1,11 @@
 # ----------------------------------------------------------------------------
 # -                        Open3D: www.open3d.org                            -
 # ----------------------------------------------------------------------------
-# Copyright (c) 2018-2023 www.open3d.org
+# Copyright (c) 2018-2024 www.open3d.org
 # SPDX-License-Identifier: MIT
 # ----------------------------------------------------------------------------
 
-# examples/python/reconstruction_system/debug/visualize_fragment.py
+# examples/python/reconstruction_system/debug/visualize_fragments.py
 
 import argparse
 import json

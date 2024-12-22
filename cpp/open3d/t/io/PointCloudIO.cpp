@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -29,6 +29,7 @@ static const std::unordered_map<
         file_extension_to_pointcloud_read_function{
                 {"npz", ReadPointCloudFromNPZ},
                 {"xyz", ReadPointCloudFromTXT},
+                {"xyzd", ReadPointCloudFromTXT},
                 {"xyzi", ReadPointCloudFromTXT},
                 {"xyzn", ReadPointCloudFromTXT},
                 {"xyzrgb", ReadPointCloudFromTXT},
@@ -45,6 +46,7 @@ static const std::unordered_map<
         file_extension_to_pointcloud_write_function{
                 {"npz", WritePointCloudToNPZ},
                 {"xyz", WritePointCloudToTXT},
+                {"xyzd", WritePointCloudToTXT},
                 {"xyzi", WritePointCloudToTXT},
                 {"xyzn", WritePointCloudToTXT},
                 {"xyzrgb", WritePointCloudToTXT},

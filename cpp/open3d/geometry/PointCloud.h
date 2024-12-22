@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -173,11 +173,12 @@ public:
     /// with a set of points has farthest distance.
     ///
     /// The sample is performed by selecting the farthest point from previous
-    /// selected points iteratively.
+    /// selected points iteratively, starting from `start_index`.
     ///
     /// \param num_samples Number of points to be sampled.
+    /// \param start_index Index to start downsampling from.
     std::shared_ptr<PointCloud> FarthestPointDownSample(
-            size_t num_samples) const;
+            const size_t num_samples, const size_t start_index = 0) const;
 
     /// \brief Function to crop pointcloud into output pointcloud
     ///
@@ -185,7 +186,9 @@ public:
     /// clipped.
     ///
     /// \param bbox AxisAlignedBoundingBox to crop points.
-    std::shared_ptr<PointCloud> Crop(const AxisAlignedBoundingBox &bbox) const;
+    /// \param invert Optional boolean to invert cropping.
+    std::shared_ptr<PointCloud> Crop(const AxisAlignedBoundingBox &bbox,
+                                     bool invert = false) const;
 
     /// \brief Function to crop pointcloud into output pointcloud
     ///
@@ -193,7 +196,9 @@ public:
     /// clipped.
     ///
     /// \param bbox OrientedBoundingBox to crop points.
-    std::shared_ptr<PointCloud> Crop(const OrientedBoundingBox &bbox) const;
+    /// \param invert Optional boolean to invert cropping.
+    std::shared_ptr<PointCloud> Crop(const OrientedBoundingBox &bbox,
+                                     bool invert = false) const;
 
     /// \brief Function to remove points that have less than \p nb_points in a
     /// sphere of a given radius.
@@ -248,10 +253,18 @@ public:
     /// \brief Function to consistently orient estimated normals based on
     /// consistent tangent planes as described in Hoppe et al., "Surface
     /// Reconstruction from Unorganized Points", 1992.
+    /// Further details on parameters are described in
+    /// Piazza, Valentini, Varetti, "Mesh Reconstruction from Point Cloud",
+    /// 2023.
     ///
     /// \param k k nearest neighbour for graph reconstruction for normal
     /// propagation.
-    void OrientNormalsConsistentTangentPlane(size_t k);
+    /// \param lambda penalty constant on the distance of a point from the
+    /// tangent plane \param cos_alpha_tol treshold that defines the amplitude
+    /// of the cone spanned by the reference normal
+    void OrientNormalsConsistentTangentPlane(size_t k,
+                                             const double lambda = 0.0,
+                                             const double cos_alpha_tol = 1.0);
 
     /// \brief Function to compute the point to point distances between point
     /// clouds.

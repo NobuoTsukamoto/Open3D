@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -68,7 +68,6 @@ int main(int argc, char *argv[]) {
     FILE *file = utility::filesystem::FOpen(match_filename, "r");
     if (file == NULL) {
         utility::LogWarning("Unable to open file {}", match_filename);
-        fclose(file);
         return 0;
     }
     char buffer[DEFAULT_IO_BUFFER_SIZE];

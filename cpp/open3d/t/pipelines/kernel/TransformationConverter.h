@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -29,6 +29,14 @@ core::Tensor RtToTransformation(const core::Tensor &R, const core::Tensor &t);
 /// \return Transformation, a tensor of shape {4, 4}, dtype and device same
 /// as pose.
 core::Tensor PoseToTransformation(const core::Tensor &pose);
+
+/// \brief Convert transformation matrix to pose.
+///
+/// \param transformation, a tensor of shape {4, 4}, of dtype Float32
+/// \return pose [alpha beta gamma, tx, ty, tz], a shape {6} tensor of dtype and
+/// device same as transformation, where alpha, beta, gamma are the Euler angles
+/// in the ZYX order.
+core::Tensor TransformationToPose(const core::Tensor &transformation);
 
 /// \brief Decodes a 6x6 linear system from a compressed 29x1 tensor.
 /// \param A_reduction 1x29 tensor storing a linear system,

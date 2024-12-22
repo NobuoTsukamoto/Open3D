@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -254,6 +254,13 @@ void AssertCUDADeviceAvailable(int device_id);
 /// device-ID must be between 0 to device count - 1.
 /// \param device The device to be checked.
 void AssertCUDADeviceAvailable(const Device& device);
+
+/// Checks if the CUDA device support Memory Pools
+/// used by the Stream Ordered Memory Allocator,
+/// see
+/// https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY__POOLS.html
+/// \param device The device to be checked.
+bool SupportsMemoryPools(const Device& device);
 
 #ifdef BUILD_CUDA_MODULE
 

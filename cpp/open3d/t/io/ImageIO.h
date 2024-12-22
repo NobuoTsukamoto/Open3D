@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -60,6 +60,10 @@ bool ReadImageFromPNG(const std::string &filename, geometry::Image &image);
 bool WriteImageToPNG(const std::string &filename,
                      const geometry::Image &image,
                      int quality = kOpen3DImageIODefaultQuality);
+
+bool WriteImageToPNGInMemory(std::vector<uint8_t> &output_buffer,
+                             const geometry::Image &image,
+                             int quality = kOpen3DImageIODefaultQuality);
 
 bool ReadImageFromJPG(const std::string &filename, geometry::Image &image);
 

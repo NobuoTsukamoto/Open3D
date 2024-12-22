@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -30,14 +30,16 @@ namespace geometry {
 class RaycastingScene {
 public:
     /// \brief Default Constructor.
-    RaycastingScene(int64_t nthreads = 0);
+    RaycastingScene(int64_t nthreads = 0,
+                    const core::Device &device = core::Device("CPU:0"));
 
     ~RaycastingScene();
 
     /// \brief Add a triangle mesh to the scene.
     /// \param vertex_positions Vertices as Tensor of dim {N,3} and dtype float.
     /// \param triangle_indices Triangles as Tensor of dim {M,3} and dtype
-    /// uint32_t. \return The geometry ID of the added mesh.
+    /// uint32_t.
+    /// \return The geometry ID of the added mesh.
     uint32_t AddTriangles(const core::Tensor &vertex_positions,
                           const core::Tensor &triangle_indices);
 
@@ -103,6 +105,33 @@ public:
     /// \return A tensor with the number of intersections. The shape is {..}.
     core::Tensor CountIntersections(const core::Tensor &rays,
                                     const int nthreads = 0);
+
+    /// \brief Lists the intersections of the rays with the scene
+    /// \param rays A tensor with >=2 dims, shape {.., 6}, and Dtype Float32
+    /// describing the rays; {..} can be any number of dimensions.
+    /// The last dimension must be 6 and has the format [ox, oy, oz, dx, dy, dz]
+    /// with [ox,oy,oz] as the origin and [dx,dy,dz] as the direction. It is not
+    /// necessary to normalize the direction although it should be normalised if
+    /// t_hit is to be calculated in coordinate units.
+    /// \param nthreads The number of threads to use. Set to 0 for automatic.
+    /// \return The returned dictionary contains:    ///
+    ///         - \b ray_splits A tensor with ray intersection splits. Can be
+    ///         used to iterate over all intersections for each ray. The shape
+    ///         is {num_rays + 1}.
+    ///         - \b ray_ids A tensor with ray IDs. The shape is
+    ///         {num_intersections}.
+    ///         - \b t_hit A tensor with the distance to the hit. The shape is
+    ///         {num_intersections}.
+    ///         - \b geometry_ids A tensor with the geometry IDs. The shape is
+    ///           {num_intersections}.
+    ///         - \b primitive_ids A tensor with the primitive IDs, which
+    ///           corresponds to the triangle index. The shape is
+    ///           {num_intersections}.
+    ///         - \b primitive_uvs A tensor with the barycentric coordinates of
+    ///           the intersection points within the triangles. The shape is
+    ///           {num_intersections, 2}.
+    std::unordered_map<std::string, core::Tensor> ListIntersections(
+            const core::Tensor &rays, const int nthreads = 0);
 
     /// \brief Computes the closest points on the surfaces of the scene.
     /// \param query_points A tensor with >=2 dims, shape {.., 3} and Dtype
@@ -223,6 +252,10 @@ public:
 
 private:
     struct Impl;
+    struct CPUImpl;
+#ifdef BUILD_SYCL_MODULE
+    struct SYCLImpl;
+#endif
     std::unique_ptr<Impl> impl_;
 };
 
